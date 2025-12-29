@@ -18,11 +18,8 @@
     #content img { border: 1px solid #ccc; margin: 10px 0; }
   </style>
   <!-- 引入 marked.js 用于 Markdown 渲染 -->
-  <!--script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script-->
   <script src="./marked.min.js"></script>
   <!-- 引入 highlight.js 用于代码高亮 -->
-  <!-- link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"> 
-   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script -->
   <link rel="stylesheet" href="./github.min.css">
   <script src="./highlight.min.js"></script>
 </head>
@@ -48,6 +45,7 @@
     <ul>
       <li><a href="posts/cmos/CMOS.md" class="md-link">CMOS图像传感器</a></li>
     </ul>
+    <p>👉 在 <code>posts/</code> 文件夹里添加新的 <code>.md</code> 文件，并在这里增加链接即可。</p>
   </section>
 
   <!-- 联系方式 -->
@@ -67,7 +65,7 @@
     <p>© 2025 我的个人主页</p>
   </footer>
 
-  <!-- 脚本：加载并渲染 Markdown，并处理图片属性 -->
+  <!-- 脚本：加载并渲染 Markdown，并修正图片路径 -->
   <script>
     // 初始化 marked 配置，支持代码高亮
     marked.setOptions({
@@ -83,7 +81,7 @@
     document.querySelectorAll('.md-link').forEach(link => {
       link.addEventListener('click', async function(e) {
         e.preventDefault();
-        const url = this.getAttribute('href');
+        const url = this.getAttribute('href'); // e.g. posts/cmos/CMOS.md
         try {
           const response = await fetch(url);
           let text = await response.text();
@@ -96,13 +94,15 @@
             let style = '';
             const widthMatch = attrs.match(/width="([^"]+)"/);
             const heightMatch = attrs.match(/height="([^"]+)"/);
-            if (widthMatch) {
-              style += `width:${widthMatch[1]};`;
-            }
-            if (heightMatch) {
-              style += `height:${heightMatch[1]};`;
-            }
+            if (widthMatch) style += `width:${widthMatch[1]};`;
+            if (heightMatch) style += `height:${heightMatch[1]};`;
             return imgTag.replace(/\/?>$/, ` style="${style}">`);
+          });
+
+          // 修正图片路径：把 ./media/... 改成相对于 md 文件目录的路径
+          const basePath = url.substring(0, url.lastIndexOf('/')); // posts/cmos
+          html = html.replace(/<img src="\.\/*media\/([^"]+)"/g, (match, filename) => {
+            return `<img src="${basePath}/media/${filename}"`;
           });
 
           document.getElementById('content').innerHTML = html;
