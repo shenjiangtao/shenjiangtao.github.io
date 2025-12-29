@@ -15,6 +15,7 @@
     li { margin: 8px 0; }
     #content { padding: 20px; background: #fafafa; border-top: 1px solid #ddd; }
     pre { background: #eee; padding: 10px; overflow-x: auto; }
+    #content img { border: 1px solid #ccc; margin: 10px 0; }
   </style>
   <!-- 引入 marked.js 用于 Markdown 渲染 -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -44,6 +45,7 @@
     <ul>
       <li><a href="posts/cmos/CMOS.md" class="md-link">CMOS图像传感器</a></li>
     </ul>
+    <p>👉 只需在 <code>posts/</code> 文件夹里添加新的 <code>.md</code> 文件，并在这里增加链接即可。</p>
   </section>
 
   <!-- 联系方式 -->
@@ -63,7 +65,7 @@
     <p>© 2025 我的个人主页</p>
   </footer>
 
-  <!-- 脚本：加载并渲染 Markdown -->
+  <!-- 脚本：加载并渲染 Markdown，并处理图片属性 -->
   <script>
     // 初始化 marked 配置，支持代码高亮
     marked.setOptions({
@@ -82,8 +84,25 @@
         const url = this.getAttribute('href');
         try {
           const response = await fetch(url);
-          const text = await response.text();
-          const html = marked.parse(text);
+          let text = await response.text();
+
+          // 先用 marked 转换成 HTML
+          let html = marked.parse(text);
+
+          // 替换 Pandoc 的 {width="..."} {height="..."} 语法为 style 属性
+          html = html.replace(/(<img[^>]+>)\{([^}]+)\}/g, (match, imgTag, attrs) => {
+            let style = '';
+            const widthMatch = attrs.match(/width="([^"]+)"/);
+            const heightMatch = attrs.match(/height="([^"]+)"/);
+            if (widthMatch) {
+              style += `width:${widthMatch[1]};`;
+            }
+            if (heightMatch) {
+              style += `height:${heightMatch[1]};`;
+            }
+            return imgTag.replace(/\/?>$/, ` style="${style}">`);
+          });
+
           document.getElementById('content').innerHTML = html;
         } catch (err) {
           document.getElementById('content').innerHTML = `<p style="color:red;">加载失败: ${err}</p>`;
