@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>文章阅读</title>
+  <link rel="stylesheet" href="./github.min.css">
+  <script src="./marked.min.js"></script>
+  <script src="./highlight.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
+    #toc { width: 250px; background: #f9f9f9; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
+    #toc h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+    #toc ul { list-style: none; padding-left: 0; }
+    #toc li { margin: 5px 0; }
+    #toc a { text-decoration: none; color: #007acc; }
+    #toc a:hover { text-decoration: underline; }
+    .hidden { display: none; }
+    .toggle-btn { cursor: pointer; font-size: 14px; color: #007acc; background: none; border: none; }
+    #content { flex: 1; padding: 20px; }
+    #content img { border: 1px solid #ccc; margin: 10px 0; }
+    pre { background: #eee; padding: 10px; overflow-x: auto; }
+    #back { margin-bottom: 20px; }
+    #back a { text-decoration: none; color: #007acc; font-weight: bold; }
+    #back a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- 左侧目录 -->
+  <aside id="toc">
+    <div id="back">
+      <a href="index.html">← 返回主页</a>
+    </div>
+    <h3>
+      目录
+      <button id="toggle-toc" class="toggle-btn">折叠</button>
+    </h3>
+    <ul id="toc-list"></ul>
+  </aside>
+
+  <!-- 右侧正文 -->
+  <div id="content">加载中...</div>
+
+  <script>
+    marked.setOptions({
+      highlight: function(code, lang) {
+        if (hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      }
+    });
+
+    // 获取 URL 参数中的 file
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file');
+
+    // 目录折叠/展开功能
+    const toggleBtn = document.getElementById('toggle-toc');
+    const tocList = document.getElementById('toc-list');
+    toggleBtn.addEventListener('click', () => {
+      tocList.classList.toggle('hidden');
+      toggleBtn.textContent = tocList.classList.contains('hidden') ? '展开' : '折叠';
+    });
+
+    if (file) {
+      fetch(file).then(res => res.text()).then(text => {
+        let html = marked.parse(text);
+
+        // 修正 Pandoc 的 {width="..."} {height="..."} 语法
+        html = html.replace(/(<img[^>]+>)\{([^}]+)\}/g, (match, imgTag, attrs) => {
+          let style = '';
+          const widthMatch = attrs.match(/width="([^"]+)"/);
+          const heightMatch = attrs.match(/height="([^"]+)"/);
+          if (widthMatch) style += `width:${widthMatch[1]};`;
+          if (heightMatch) style += `height:${heightMatch[1]};`;
+          return imgTag.replace(/\/?>$/, ` style="${style}">`);
+        });
+
+        // 修正图片路径
+        const basePath = file.substring(0, file.lastIndexOf('/'));
+        html = html.replace(/<img src="\.\/*media\/([^"]+)"/g, (match, filename) => {
+          return `<img src="${basePath}/media/${filename}"`;
+        });
+
+        document.getElementById('content').innerHTML = html;
+
+        // 自动生成目录
+        tocList.innerHTML = '';
+        const headings = document.querySelectorAll('#content h1, #content h2, #content h3');
+        headings.forEach((heading, index) => {
+          const id = 'heading-' + index;
+          heading.id = id;
+          const li = document.createElement('li');
+          li.style.marginLeft = heading.tagName === 'H2' ? '10px' : heading.tagName === 'H3' ? '20px' : '0';
+          li.innerHTML = `<a href="#${id}">${heading.textContent}</a>`;
+          tocList.appendChild(li);
+        });
+      }).catch(err => {
+        document.getElementById('content').innerHTML = `<p style="color:red;">加载失败: ${err}</p>`;
+      });
+    } else {
+      document.getElementById('content').innerHTML = '<p style="color:red;">未指定文件</p>';
+    }
+  </script>
+</body>
+</html>
