@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>JTSHEN</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     nav { background: #333; padding: 10px; }
     nav a { color: white; margin: 0 15px; text-decoration: none; }
     nav a:hover { text-decoration: underline; }
-    section { padding: 40px; }
+    section { padding: 40px; flex: 1; }
     h1, h2 { color: #333; }
     footer { background: #f2f2f2; text-align: center; padding: 20px; margin-top: 40px; }
     ul { list-style-type: none; padding: 0; }
@@ -16,58 +16,75 @@
     #content { padding: 20px; background: #fafafa; border-top: 1px solid #ddd; }
     pre { background: #eee; padding: 10px; overflow-x: auto; }
     #content img { border: 1px solid #ccc; margin: 10px 0; }
+    #toc { width: 250px; background: #f9f9f9; border-left: 1px solid #ddd; padding: 20px; overflow-y: auto; }
+    #toc h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+    #toc ul { list-style: none; padding-left: 0; }
+    #toc li { margin: 5px 0; }
+    #toc a { text-decoration: none; color: #007acc; }
+    #toc a:hover { text-decoration: underline; }
+    .hidden { display: none; }
+    .toggle-btn { cursor: pointer; font-size: 14px; color: #007acc; background: none; border: none; }
   </style>
-  <!-- 引入 marked.js 用于 Markdown 渲染 -->
+  <!-- 引入 marked.js -->
   <script src="./marked.min.js"></script>
-  <!-- 引入 highlight.js 用于代码高亮 -->
+  <!-- 引入 highlight.js -->
   <link rel="stylesheet" href="./github.min.css">
   <script src="./highlight.min.js"></script>
 </head>
 <body>
 
-  <!-- 导航栏 -->
-  <nav>
-    <a href="#about">关于我</a>
-    <a href="#articles">文章列表</a>
-    <a href="#contact">联系方式</a>
-  </nav>
+  <div style="flex:1;">
+    <!-- 导航栏 -->
+    <nav>
+      <a href="#about">关于我</a>
+      <a href="#articles">文章列表</a>
+      <a href="#contact">联系方式</a>
+    </nav>
 
-  <!-- 个人介绍 -->
-  <section id="about">
-    <h1>你好，我是沈江涛</h1>
-    <p>曾主导过自研芯片整体方案的集成与交付，具备从架构设计到落地实现的完整经验。过去，我还担任过广电总局技术委员会的标准审订委员，参与行业标准的制定与优化，积累了丰富的跨领域技术与管理经验。</p>
-    <p>目前，我专注于汽车自动驾驶的系统集成工作，致力于将芯片设计、系统架构与智能驾驶技术深度结合，推动下一代智能出行解决方案的落地。我的目标是通过技术创新与跨界融合，为产业发展贡献更具前瞻性的成果。</p>
-  </section>
+    <!-- 个人介绍 -->
+    <section id="about">
+      <h1>你好，我是沈江涛</h1>
+      <p>曾主导过自研芯片整体方案的集成与交付，具备从架构设计到落地实现的完整经验。过去，我还担任过广电总局技术委员会的标准审订委员，参与行业标准的制定与优化，积累了丰富的跨领域技术与管理经验。</p>
+      <p>目前，我专注于汽车自动驾驶的系统集成工作，致力于将芯片设计、系统架构与智能驾驶技术深度结合，推动下一代智能出行解决方案的落地。我的目标是通过技术创新与跨界融合，为产业发展贡献更具前瞻性的成果。</p>
+    </section>
 
-  <!-- 文章列表 -->
-  <section id="articles">
-    <h2>我的文章</h2>
-    <ul>
-      <li><a href="posts/cmos/CMOS.md" class="md-link">CMOS图像传感器</a></li>
-    </ul>
-    <p>👉 在 <code>posts/</code> 文件夹里添加新的 <code>.md</code> 文件，并在这里增加链接即可。</p>
-  </section>
+    <!-- 文章列表 -->
+    <section id="articles">
+      <h2>我的文章</h2>
+      <ul>
+        <li><a href="posts/cmos/CMOS.md" class="md-link">CMOS图像传感器</a></li>
+      </ul>
+    </section>
 
-  <!-- 联系方式 -->
-  <section id="contact">
-    <h2>联系方式</h2>
-    <p>📧 邮箱: <a href="mailto:shenjiangtao@gmail.com">shenjiangtao@gmail.com</a></p>
-    <p>💼 GitHub: <a href="https://github.com/shenjiangtao" target="_blank">github.com/shenjiangtao</a></p>
-  </section>
+    <!-- 联系方式 -->
+    <section id="contact">
+      <h2>联系方式</h2>
+      <p>📧 邮箱: <a href="mailto:shenjiangtao@gmail.com">shenjiangtao@gmail.com</a></p>
+      <p>💼 GitHub: <a href="https://github.com/shenjiangtao" target="_blank">github.com/shenjiangtao</a></p>
+    </section>
 
-  <!-- Markdown 渲染区域 -->
-  <section id="content">
-    <h2>点击上方文章链接加载 Markdown 内容</h2>
-  </section>
+    <!-- Markdown 渲染区域 -->
+    <section id="content">
+      <h2>点击上方文章链接加载 Markdown 内容</h2>
+    </section>
 
-  <!-- 页脚 -->
-  <footer>
-    <p>© 2025 我的个人主页</p>
-  </footer>
+    <!-- 页脚 -->
+    <footer>
+      <p>© 2025 我的个人主页</p>
+    </footer>
+  </div>
 
-  <!-- 脚本：加载并渲染 Markdown，并修正图片路径 -->
+  <!-- 目录区域 -->
+  <aside id="toc">
+    <h3>
+      目录
+      <button id="toggle-toc" class="toggle-btn">折叠</button>
+    </h3>
+    <ul id="toc-list"></ul>
+  </aside>
+
+  <!-- 脚本：加载并渲染 Markdown，并生成目录 -->
   <script>
-    // 初始化 marked 配置，支持代码高亮
     marked.setOptions({
       highlight: function(code, lang) {
         if (hljs.getLanguage(lang)) {
@@ -77,16 +94,21 @@
       }
     });
 
-    // 给所有 .md-link 添加点击事件
+    // 目录折叠/展开功能
+    const toggleBtn = document.getElementById('toggle-toc');
+    const tocList = document.getElementById('toc-list');
+    toggleBtn.addEventListener('click', () => {
+      tocList.classList.toggle('hidden');
+      toggleBtn.textContent = tocList.classList.contains('hidden') ? '展开' : '折叠';
+    });
+
     document.querySelectorAll('.md-link').forEach(link => {
       link.addEventListener('click', async function(e) {
         e.preventDefault();
-        const url = this.getAttribute('href'); // e.g. posts/cmos/CMOS.md
+        const url = this.getAttribute('href');
         try {
           const response = await fetch(url);
           let text = await response.text();
-
-          // 先用 marked 转换成 HTML
           let html = marked.parse(text);
 
           // 替换 Pandoc 的 {width="..."} {height="..."} 语法为 style 属性
@@ -99,13 +121,26 @@
             return imgTag.replace(/\/?>$/, ` style="${style}">`);
           });
 
-          // 修正图片路径：把 ./media/... 改成相对于 md 文件目录的路径
-          const basePath = url.substring(0, url.lastIndexOf('/')); // posts/cmos
+          // 修正图片路径
+          const basePath = url.substring(0, url.lastIndexOf('/'));
           html = html.replace(/<img src="\.\/*media\/([^"]+)"/g, (match, filename) => {
             return `<img src="${basePath}/media/${filename}"`;
           });
 
+          // 渲染 Markdown
           document.getElementById('content').innerHTML = html;
+
+          // 自动生成目录
+          tocList.innerHTML = '';
+          const headings = document.querySelectorAll('#content h1, #content h2, #content h3');
+          headings.forEach((heading, index) => {
+            const id = 'heading-' + index;
+            heading.id = id;
+            const li = document.createElement('li');
+            li.style.marginLeft = heading.tagName === 'H2' ? '10px' : heading.tagName === 'H3' ? '20px' : '0';
+            li.innerHTML = `<a href="#${id}">${heading.textContent}</a>`;
+            tocList.appendChild(li);
+          });
         } catch (err) {
           document.getElementById('content').innerHTML = `<p style="color:red;">加载失败: ${err}</p>`;
         }
