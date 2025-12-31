@@ -8,15 +8,16 @@
   <script src="./highlight.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
-    #toc { width: 250px; background: #f9f9f9; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; }
+    #toc { width: 250px; background: #f9f9f9; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; height: 100vh; position: sticky; top: 0; }
     #toc h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
     #toc ul { list-style: none; padding-left: 0; }
     #toc li { margin: 5px 0; }
     #toc a { text-decoration: none; color: #007acc; }
+    #toc a.active { font-weight: bold; color: #d9534f; }
     #toc a:hover { text-decoration: underline; }
     .hidden { display: none; }
     .toggle-btn { cursor: pointer; font-size: 14px; color: #007acc; background: none; border: none; }
-    #content { flex: 1; padding: 20px; }
+    #content { flex: 1; padding: 20px; scroll-behavior: smooth; }
     #content img { border: 1px solid #ccc; margin: 10px 0; }
     pre { background: #eee; padding: 10px; overflow-x: auto; }
     #back { margin-bottom: 20px; }
@@ -51,11 +52,9 @@
       }
     });
 
-    // 获取 URL 参数中的 file
     const params = new URLSearchParams(window.location.search);
     const file = params.get('file');
 
-    // 目录折叠/展开功能
     const toggleBtn = document.getElementById('toggle-toc');
     const tocList = document.getElementById('toc-list');
     toggleBtn.addEventListener('click', () => {
@@ -96,6 +95,48 @@
           li.innerHTML = `<a href="#${id}">${heading.textContent}</a>`;
           tocList.appendChild(li);
         });
+
+        // IntersectionObserver 高亮并滚动目录
+        const observerOptions = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.3
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              document.querySelectorAll('#toc a').forEach(a => {
+                const isActive = a.getAttribute('href') === '#' + id;
+                a.classList.toggle('active', isActive);
+                if (isActive) {
+                  const toc = document.getElementById('toc');
+                  const linkRect = a.getBoundingClientRect();
+                  const tocRect = toc.getBoundingClientRect();
+                  const offset = linkRect.top - tocRect.top;
+                  // 在当前 scrollTop 基础上调整，保证高亮项稍微靠下
+                  toc.scrollTop += offset - 40; // 40px 偏移量可根据需要调整
+                }
+              });
+            }
+          });
+        }, observerOptions);
+
+        headings.forEach(heading => observer.observe(heading));
+
+        // 平滑滚动效果
+        document.querySelectorAll('#toc a').forEach(a => {
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = a.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        });
+
       }).catch(err => {
         document.getElementById('content').innerHTML = `<p style="color:red;">加载失败: ${err}</p>`;
       });
