@@ -8,41 +8,41 @@ author: Jacob Austin†
 # 如何理解 GPU | How To Scale Your Model
 
 > ## Excerpt
-> 我们在 Google 热爱 TPU, 但 GPU 也很棒. 本章将深入探讨 NVIDIA GPU 的世界——每个芯片如何工作, 它们如何联网, 以及这对 LLM 意味着什么, 特别是与 TPU 相比. 本节建立在 <a href='https://lqhl.github.io/scaling-book/tpus/'>第 2 章</a> 和 <a href='https://lqhl.github.io/scaling-book/training'>第 5 章</a> 的基础上, 建议您先阅读它们.
+> 我们在 Google 热爱 TPU, 但 GPU 也很棒. 本章将深入探讨 NVIDIA GPU 的世界——每个芯片如何工作, 它们如何联网, 以及这对 LLM 意味着什么, 特别是与 TPU 相比. 本节建立在 <a href='https://jax-ml.github.io/scaling-book/tpus/'>第 2 章</a> 和 <a href='https://jax-ml.github.io/scaling-book/training'>第 5 章</a> 的基础上, 建议您先阅读它们.
 
 ---
 ### Contents
 
--   [内存](https://lqhl.github.io/scaling-book/gpus/#%E5%86%85%E5%AD%98)
--   [GPU 规格摘要](https://lqhl.github.io/scaling-book/gpus/#gpu-%E8%A7%84%E6%A0%BC%E6%91%98%E8%A6%81)
--   [芯片层面的 GPU 与 TPU 对比](https://lqhl.github.io/scaling-book/gpus/#%E8%8A%AF%E7%89%87%E5%B1%82%E9%9D%A2%E7%9A%84-gpu-%E4%B8%8E-tpu-%E5%AF%B9%E6%AF%94)
--   [测验 1: GPU 硬件](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%8B%E9%AA%8C-1-gpu-%E7%A1%AC%E4%BB%B6)
+-   [内存](https://jax-ml.github.io/scaling-book/gpus/#memory)
+-   [GPU 规格摘要](https://jax-ml.github.io/scaling-book/gpus/#summary-of-gpu-specs)
+-   [芯片层面的 GPU 与 TPU 对比](https://jax-ml.github.io/scaling-book/gpus/#gpus-vs-tpus-at-the-chip-level)
+-   [测验 1: GPU 硬件](https://jax-ml.github.io/scaling-book/gpus/#quiz-1-gpu-hardware)
 
--   [节点层面](https://lqhl.github.io/scaling-book/gpus/#%E8%8A%82%E7%82%B9%E5%B1%82%E9%9D%A2)
--   [测验 2: GPU 节点](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%8B%E9%AA%8C-2-gpu-%E8%8A%82%E7%82%B9)
--   [节点之外](https://lqhl.github.io/scaling-book/gpus/#%E8%8A%82%E7%82%B9%E4%B9%8B%E5%A4%96)
--   [测验 3: 节点之外](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%8B%E9%AA%8C-3-%E8%8A%82%E7%82%B9%E4%B9%8B%E5%A4%96)
+-   [节点层面](https://jax-ml.github.io/scaling-book/gpus/#at-the-node-level)
+-   [测验 2: GPU 节点](https://jax-ml.github.io/scaling-book/gpus/#quiz-2-gpu-nodes)
+-   [节点之外](https://jax-ml.github.io/scaling-book/gpus/#beyond-the-node-level)
+-   [测验 3: 节点之外](https://jax-ml.github.io/scaling-book/gpus/#quiz-3-beyond-the-node-level)
 
--   [节点内集合操作](https://lqhl.github.io/scaling-book/gpus/#%E8%8A%82%E7%82%B9%E5%86%85%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C)
--   [跨节点集合操作](https://lqhl.github.io/scaling-book/gpus/#%E8%B7%A8%E8%8A%82%E7%82%B9%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C)
--   [测验 4: 集合操作](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%8B%E9%AA%8C-4-%E9%9B%86%E5%90%88%E6%93%8D%E4%BD%9C)
+-   [节点内集合操作](https://jax-ml.github.io/scaling-book/gpus/#intra-node-collectives)
+-   [跨节点集合操作](https://jax-ml.github.io/scaling-book/gpus/#cross-node-collectives)
+-   [测验 4: 集合操作](https://jax-ml.github.io/scaling-book/gpus/#quiz-4-collectives)
 
--   [数据并行](https://lqhl.github.io/scaling-book/gpus/#%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%A1%8C)
--   [张量并行](https://lqhl.github.io/scaling-book/gpus/#%E5%BC%A0%E9%87%8F%E5%B9%B6%E8%A1%8C)
--   [专家并行](https://lqhl.github.io/scaling-book/gpus/#%E4%B8%93%E5%AE%B6%E5%B9%B6%E8%A1%8C)
--   [流水线并行](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%81%E6%B0%B4%E7%BA%BF%E5%B9%B6%E8%A1%8C)
--   [示例](https://lqhl.github.io/scaling-book/gpus/#%E7%A4%BA%E4%BE%8B)
--   [GPU 上 LLM 扩展的 TLDR](https://lqhl.github.io/scaling-book/gpus/#gpu-%E4%B8%8A-llm-%E6%89%A9%E5%B1%95%E7%9A%84-tldr)
--   [测验 5: LLM Rooflines](https://lqhl.github.io/scaling-book/gpus/#%E6%B5%8B%E9%AA%8C-5-llm-rooflines)
+-   [数据并行](https://jax-ml.github.io/scaling-book/gpus/#data-parallelism)
+-   [张量并行](https://jax-ml.github.io/scaling-book/gpus/#tensor-parallelism)
+-   [专家并行](https://jax-ml.github.io/scaling-book/gpus/#expert-parallelism)
+-   [流水线并行](https://jax-ml.github.io/scaling-book/gpus/#pipeline-parallelism)
+-   [示例](https://jax-ml.github.io/scaling-book/gpus/#examples)
+-   [GPU 上 LLM 扩展的 TLDR](https://jax-ml.github.io/scaling-book/gpus/#tldr-of-llm-scaling-on-gpus)
+-   [测验 5: LLM Rooflines](https://jax-ml.github.io/scaling-book/gpus/#quiz-5-llm-rooflines)
 
--   [附录 A: GB200 会带来哪些变化?](https://lqhl.github.io/scaling-book/gpus/#%E9%99%84%E5%BD%95-a-gb200-%E4%BC%9A%E5%B8%A6%E6%9D%A5%E5%93%AA%E4%BA%9B%E5%8F%98%E5%8C%96)
--   [附录 B: 更多网络细节](https://lqhl.github.io/scaling-book/gpus/#%E9%99%84%E5%BD%95-b-%E6%9B%B4%E5%A4%9A%E7%BD%91%E7%BB%9C%E7%BB%86%E8%8A%82)
+-   [附录 A: GB200 会带来哪些变化?](https://jax-ml.github.io/scaling-book/gpus/#appendix-a-how-does-this-change-with-gb200)
+-   [附录 B: 更多网络细节](https://jax-ml.github.io/scaling-book/gpus/#appendix-b-more-networking-details)
 
 ## 什么是 GPU?
 
 现代机器学习 GPU (例如 H100, B200) 基本上是一堆专门用于矩阵乘法的计算核心 (称为**流式多处理器**或 **SMs**), 连接到一块高速内存 (称为 **HBM**). 下图是一个示意图:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gpu-diagram.png)
+![](./media/image_gpu-diagram.png)
 
 **图:** 展示 H100 或 B200 GPU 抽象布局的示意图. H100 有 132 个 SM, 而 B200 有 148 个. 我们宽泛地使用术语 'Warp 调度器' 来描述一组 32 个 CUDA SIMD 核心_以及_向它们分派工作的调度器. 注意这与 TPU 的相似之处!
 
@@ -50,7 +50,7 @@ author: Jacob Austin†
 
 让我们更详细地看一下 H100 SM:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/blackwell-sm.png)
+![](./media/image_blackwell-sm.png)
 
 **图:** H100 SM 的示意图 ([来源](https://wccftech.com/nvidia-hopper-gh100-gpu-official-5nm-process-worlds-fastest-hpc-chip-80-billion-transistors-hbm3-memory/)), 展示了 4 个_子分区_, 每个子分区包含一个张量核心, Warp 调度器, 寄存器文件, 以及不同精度的 CUDA 核心集. 底部附近的 'L1 数据缓存' 是 256kB 的 SMEM 单元. B200 看起来类似, 但增加了大量的张量内存 (TMEM) 来为庞大的张量核心提供数据.
 
@@ -66,7 +66,7 @@ author: Jacob Austin†
 
 **CUDA 核心比 TPU 的 VPU 更灵活:** GPU CUDA 核心 (自 V100 起) 使用所谓的 SIMT (_单指令多线程_) 编程模型, 而 TPU 使用 SIMD (_单指令多数据_) 模型. 与 TPU VPU 中的 ALU 类似, 一个子分区内的 CUDA 核心必须在每个周期执行相同的操作 (例如, 如果一个核心正在对两个浮点数进行加法, 那么该子分区中的所有其他 CUDA 核心也必须这样做). 然而, 与 VPU 不同的是, 每个 CUDA 核心 (或 CUDA 编程模型中的“线程”) 都有自己的指令指针, 并且可以被独立_编程_. 当同一 warp 中的两个线程被指示执行不同的操作时, 你实际上会执行_两种_操作, 屏蔽掉那些不需要执行发散操作的核心.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/warp-divergence.png)
+![](./media/image_warp-divergence.png)
 
 **图:** 一组线程内 warp 发散的示例 ([来源](https://images.nvidia.com/content/volta-architecture/pdf/volta-architecture-whitepaper.pdf)). 白色空间表示至少一部分物理 CUDA 核心的停顿.
 
@@ -202,7 +202,7 @@ GPU 最初用于渲染视频游戏, 但自 2010 年代深度学习兴起以来, 
 
 另一方面, GPU 使用更传统的分层树状交换网络. 称为**节点**的 8 个 GPU 集合 (GB200 最多 72 个术语“节点”是重载的, 可以指两件事: NVLink 域, 即通过 NVLink 互连完全连接的 GPU 集合, 或连接到单个 CPU 主机的 GPU 集合. 在 B200 之前, 这两者通常是相同的, 但在 GB200 NVL72 中, 我们有一个包含 72 个 GPU 的 NVLink 域, 但每个主机仍然只连接 8 个 GPU. 我们在这里使用术语“节点”来指代 NVLink 域, 但这有争议.) 使用称为 NVLink 的高带宽互连在 1 跳内连接, 这些节点使用连接到每个 GPU 的 NIC, 通过带宽较低的 InfiniBand (IB) 或以太网网络连接成更大的单元 (称为 **SU** 或可扩展单元). 这些单元又可以通过更高级别的交换机连接成任意大的单元.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/superpod-diagram.png)
+![](./media/image_superpod-diagram.png)
 
 **图:** 展示典型 H100 网络的示意图. 一组 8 个 GPU 通过 NVSwitches (也称为 NVLink 交换机) 连接成一个节点或 NVLink 域, 这些节点通过交换式 InfiniBand 结构相互连接. H100 在 NVLink 域中每个大约有 450GB/s 的出口带宽, 每个节点有 400GB/s 的出口带宽进入 IB 网络.
 
@@ -210,7 +210,7 @@ GPU 最初用于渲染视频游戏, 但自 2010 年代深度学习兴起以来, 
 
 GPU 节点是一个小单元, 通常由 8 个 GPU (GB200 最多 72 个) 组成, 通过全对全, 全带宽, 低延迟的 NVLink 互连连接.NVLink 被向我描述为一种增强版的 PCIe 连接, 具有低延迟和协议开销, 但不为可扩展性/容错性而设计, 而 InfiniBand 更像以太网, 专为更大的有损网络而设计. 每个节点包含几个高带宽的 NVSwitches, 用于在所有本地 GPU 之间交换数据包. 实际的节点级拓扑随时间变化很大, 包括每个节点的交换机数量, 但对于 H100, 我们每个节点有 4 个 NVSwitches, GPU 以 `5 + 4 + 4 + 5` 的链接模式连接到它们, 如下图所示:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/nvlink-nodes.png)
+![](./media/image_nvlink-nodes.png)
 
 **图:** 从 Pascall (P100) 开始的节点 (即 NVLink 域) 示意图. 自 Volta (V100) 以来, 我们通过一组交换机在节点内实现了全对全连接. H100 节点有 4 个 NVSwitches, 通过 25GB/s 的链接连接到所有 8 个 GPU.
 
@@ -240,7 +240,7 @@ Blackwell (B200) 的节点有 8 个 GPU. GB200NVL72 支持更大的 72 个 GPU �
 
 **答案:** 任何偶数分区都会在每一半有 4 个 GPU, 每个 GPU 可以向另一半输出 `4 * 450GB/s`. 考虑到双向流量, 这使得 `8 * 450GB/s` 的字节穿过分区, 即 3.6TB/s 的对分带宽. 这也是 NVIDIA 在例如[这里](https://hc34.hotchips.org/assets/program/conference/day2/Network%20and%20Switches/NVSwitch%20HotChips%202022%20r5.pdf)报告的.
 
-**问题 3 \[AllGather 成本\]**: 给定一个 B 字节的数组, 一个 (吞吐量受限的) AllGather 在一个 8xH100 节点上需要多长时间? 对 bf16\[D<sub>X</sub>, F\] 进行计算, 其中 `D=4096`, `F=65,536`. _在回答这个问题之前, 值得阅读 TPU 集合操作的[部分](https://lqhl.github.io/scaling-book/sharding/). 在这里思考一下, 但我们接下来会更详细地讨论集合操作._
+**问题 3 \[AllGather 成本\]**: 给定一个 B 字节的数组, 一个 (吞吐量受限的) AllGather 在一个 8xH100 节点上需要多长时间? 对 bf16\[D<sub>X</sub>, F\] 进行计算, 其中 `D=4096`, `F=65,536`. _在回答这个问题之前, 值得阅读 TPU 集合操作的[部分](https://jax-ml.github.io/scaling-book/sharding/). 在这里思考一下, 但我们接下来会更详细地讨论集合操作._
 
 点击这里查看答案.
 
@@ -254,7 +254,7 @@ Blackwell (B200) 的节点有 8 个 GPU. GB200NVL72 支持更大的 72 个 GPU �
 
 这是一个参考的 1024 GPU H100 系统的示意图, 其中底行的每个框都是一个包含 8 个 H100 GPU, 8 个 400Gbps CX7 NIC (每个 GPU 一个) 和 4 个 NVSwitches 的单个 8xH100 节点.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/h100-superpod.png)
+![](./media/image_h100-superpod.png)
 
 **图:** 1024 H100 DGX SuperPod 参考架构图, 包含 128 个节点 (有时是 127 个), 每个节点有 8 个 H100 GPU, 连接到一个 InfiniBand 横向扩展网络. 32 个节点 (256 个 GPU) 的集合称为 '可扩展单元' 或 SU. 叶交换机和主干 IB 交换机提供了足够的带宽, 以实现节点间的完全对分带宽.
 
@@ -278,11 +278,11 @@ GPU 交换结构理论上可以通过增加额外的交换机或间接层来扩�
 
 **GB200 NVL72s:** NVIDIA 最近开始生产新的 GB200 NVL72 GPU 集群, 将 72 个 GPU 组合在一个 NVLink 域中, 具有完整的 900GB/s 的 GPU 间带宽. 这些域可以连接成更大的 SuperPod, 具有成比例更高 (9x) 的 IB 胖树带宽. 以下是该拓扑的示意图:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gb200-superpod.png)
+![](./media/image_gb200-superpod.png)
 
 **图:** 展示一个包含 576 个 GPU 的 GB200 DGX SuperPod 的示意图. 底层的每个机架包含 72 个 GB200 GPU.
 
-计算单个节点的出口带宽 (上图中的橙色线), 我们有 `4 * 18 * 400 / 8 = 3.6TB/s` 的带宽到叶级别, 这比 H100 多 9 倍 (正如节点包含 9 倍多的 GPU). 这意味着关键的节点出口带宽要高得多, 我们的跨节点集合带宽实际上可能_低于_节点内的带宽. 更多讨论请参见[附录 A](https://lqhl.github.io/scaling-book/gpus/#appendix-a-how-does-this-change-with-gb200).
+计算单个节点的出口带宽 (上图中的橙色线), 我们有 `4 * 18 * 400 / 8 = 3.6TB/s` 的带宽到叶级别, 这比 H100 多 9 倍 (正如节点包含 9 倍多的 GPU). 这意味着关键的节点出口带宽要高得多, 我们的跨节点集合带宽实际上可能_低于_节点内的带宽. 更多讨论请参见[附录 A](https://jax-ml.github.io/scaling-book/gpus/#appendix-a-how-does-this-change-with-gb200).
 
 |节点类型|每节点 GPU 数|GPU 出口带宽|节点出口带宽|
 |---|---|---|---|
@@ -325,7 +325,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 你会注意到这和 TPU 上完全一样. 对于 AllReduce, 你可以像往常一样组合一个 RS + AG, 成本是两倍.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/all-gather.gif)
+![](./media/image_all-gather.gif)
 
 **图:** 带宽最优的 1D 环形 AllGather 算法. 对于 B 字节, 这将 V / X 字节在顶层交换机上传输 X - 1 次.
 
@@ -355,7 +355,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 **实证测量:** 这是在一个 8xH100 节点上 AllReduce 带宽的实证测量. Algo BW 是测量的带宽 (字节 / 运行时间), Bus BW 计算为 2 \\cdot W \\cdot (8 - 1) / 8, 理论上是实际链路带宽的度量. 你会注意到我们确实达到了接近 370GB/s, 低于 450GB/s 但相当接近, 尽管每个设备只有大约 10GB. 这意味着虽然这些估计在理论上是正确的, 但需要一个大的消息才能实现它.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gpu-all-reduce-bw.png)
+![](./media/image_gpu-all-reduce-bw.png)
 
 **图:** 禁用 SHARP 的 8xH100 节点的 AllReduce 吞吐量. 蓝色曲线是根据实证测量计算出的经验链路带宽, 计算公式为 2 \* \\text{bytes} \* (N - 1) / (N \* \\text{runtime}). 注意, 即使使用巨大的 10GB 数组, 我们也没有特别接近声称的 450GB/s 带宽.
 
@@ -365,7 +365,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 **网络内归约:** 自 Hopper 这一代以来, NVIDIA 交换机支持 [“SHARP” (可扩展分层聚合和归约协议)](https://developer.nvidia.com/blog/advancing-performance-with-nvidia-sharp-in-network-computing/), 允许“网络内归约”. 这意味着_网络交换机本身_可以执行归约操作, 并将结果多路复用或“多播”到多个目标 GPU:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/sharp-algorithm.png)
+![](./media/image_sharp-algorithm.png)
 
 **图:** 没有 SHARP 的 AllReduce 理论成本是 2 倍, 因为它必须两次通过每个 GPU. 实际上, 速度提升只有大约 30% (来自 NCCL 2.27.5).
 
@@ -375,7 +375,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 然而, 在实践中, 我们看到启用 SHARP 后带宽增加了约 30%, 而预测是 75%. 这仅仅使我们的有效集合带宽达到约 480GB/s, 远非 2 倍.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/sharp-all-reduce-cost.png)
+![](./media/image_sharp-all-reduce-cost.png)
 
 **图:** 在节点内启用和禁用 NVIDIA SHARP 的 AllReduce 算法带宽的实证测量. 尽管算法上应该能实现接近 75% 的增益, 但在峰值时, 增益仅为约 30% 的吞吐量提升.
 
@@ -437,7 +437,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 对于 `D = 8192`, `F = 32,768`, 我们有:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/sharded-all-gather-cost.png)
+![](./media/image_sharded-all-gather-cost.png)
 
 **图:** 随着内轴跨越更多节点, 分片 AllGather 的理论成本.
 
@@ -497,7 +497,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 ## GPU 上 LLM 扩展的 Roofline 模型
 
-现在让我们来看看这一切都是为了什么: 理解 GPU 上 LLM 扩展的 roofline 模型. 这是对 TPU 训练章节[这里](https://lqhl.github.io/scaling-book/training)的补充. 和那里一样, 这里的目标是查看不同并行策略的总 T\_\\text{math} 和 T\_\\text{comms}, 并理解在什么点上 T\_\\text{comms} > T\_\\text{math}. 和之前一样, 我们只考虑 MLP 块, 其操作为
+现在让我们来看看这一切都是为了什么: 理解 GPU 上 LLM 扩展的 roofline 模型. 这是对 TPU 训练章节[这里](https://jax-ml.github.io/scaling-book/training)的补充. 和那里一样, 这里的目标是查看不同并行策略的总 T\_\\text{math} 和 T\_\\text{comms}, 并理解在什么点上 T\_\\text{comms} > T\_\\text{math}. 和之前一样, 我们只考虑 MLP 块, 其操作为
 
 其中 B 是全局批处理大小 **(以 token 为单位)** (即 B = \\text{批处理大小} \\cdot \\text{序列长度}).
 
@@ -574,13 +574,13 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 (2) **流水线使数据并行和 FSDP 变得困难:** 可能不做流水线的最大原因是它与 FSDP 和数据并行的兼容性不好. 特别是 ZeRO-3 分片效果很差, 因为它要求我们在每个微批次上 AllGather 权重, 当我们只有 B / N\_\\text{microbatches} 个 token 来摊销 AllGather 成本时, 这是行不通的. 此外, 在反向传播期间, _我们无法在最后一个微批次通过给定阶段之前对梯度进行 AllReduce 或 ReduceScatter, 这意味着我们有显著的未重叠的通信时间._
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/pipeline-bubble.png)
+![](./media/image_pipeline-bubble.png)
 
 **图:** 一个 2 阶段, 2 微批次流水线的示例. F 表示阶段前向传播, B 是阶段后向传播 (成本是 2 倍). G 表示数据并行 AllReduce, 其时间可能明显长于单个微批次的时间.
 
 (3) **流水线气泡和步骤不平衡:** 正如你在上面 (糟糕的) 流水线调度中看到的, 在一个简单的流水线调度中很容易出现显著的气泡 (意味着浪费的计算). 上面, 第二阶段在步骤 0 是空闲的, 第一阶段从步骤 2 到 3 是空闲的, 第二阶段在最后一步再次是空闲的. 虽然我们可以通过仔细的调度在一定程度上避免这些, 但我们仍然经常有一些气泡. 我们还必须在关键路径上将激活值从一个阶段传递到下一个阶段, 这会增加开销:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/pipeline-transfer.png)
+![](./media/image_pipeline-transfer.png)
 
 **图:** 一个显示红色传输成本的流水线示例. 这会使阶段相对移动, 并增加流水线气泡开销.
 
@@ -650,7 +650,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 **问题 3 \[Megatron-LM 超参数\]:** 考虑[Megatron-LM 仓库](https://github.com/NVIDIA/Megatron-LM)中的这张图, 突出了他们的高 MFU 数字.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/megatron-hparams.png)
+![](./media/image_megatron-hparams.png)
 
 注意, 他们的序列长度到处都是 4096. 对于 16B, 70B 和 314B 模型, 每个 GPU 的 token 批处理大小是多少? 假设数据并行是最外层的轴, 并假设 bfloat16 归约, 判断这些中的每一个在理论上是计算密集型还是通信密集型, 以及是否有更优的配置可用?
 
@@ -691,7 +691,7 @@ GPU 可以执行与 TPU 相同的所有集合操作: ReduceScatters, AllGathers,
 
 Blackwell 引入了一系列重大的网络变化, 包括 NVLink 5, 其总 NVLink 带宽是原来的两倍 (900GB/s). B200 仍然有 8-GPU 节点, 就像 H100 一样, 但 GB200 系统 (将 B200 GPU 与 Grace CPU 结合) 引入了更大的 NVLink 域 (NVL72 中有 72 个 GPU, 理论上最多可达 576 个). 这个更大的 NVLink 域也有效地增加了节点出口带宽, 从而降低了节点之上的集合操作成本.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/b200-node.png)
+![](./media/image_b200-node.png)
 
 **图:** 展示 GB200 NVL72 单元如何构建的示意图, 包含 18 个交换机和 72 个 GPU.
 
@@ -699,7 +699,7 @@ Blackwell 引入了一系列重大的网络变化, 包括 NVLink 5, 其总 NVLin
 
 在节点之外, 情况变化更大. 这是来自[这里](https://docs.nvidia.com/dgx-superpod/reference-architecture-scalable-infrastructure-gb200/latest/network-fabrics.html#compute-fabric-576)的 SuperPod 示意图.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gb200-superpod.png)
+![](./media/image_gb200-superpod.png)
 
 **图:** 展示一个包含 576 个 GPU 的 GB200 DGX SuperPod 的示意图.
 
@@ -711,7 +711,7 @@ Blackwell 引入了一系列重大的网络变化, 包括 NVLink 5, 其总 NVLin
 
 这是一个 NVLink 4 交换机的示意图. 总共有 64 个 NVLink4 端口 (每个使用 2 个物理通道), 以及一个处理通道间交换的大型交叉开关. 相比之下, TPU 使用可以动态重新配置的带反射镜的光学交换机.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/nvlink4.png)
+![](./media/image_nvlink4.png)
 
 **图:** 单个 NVLink4 交换机的更底层视图.
 
@@ -725,23 +725,23 @@ Blackwell 引入了一系列重大的网络变化, 包括 NVLink 5, 其总 NVLin
 
 **GPU 实证 AR 带宽:**
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gpu-all-reduce-bw.png)
+![](./media/image_gpu-all-reduce-bw.png)
 
 **图:** 8xH100 集群上的 AllReduce 带宽 (节点内, 禁用 SHARP).
 
 TPU v5p 带宽 (1 轴):
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/tpu-all-reduce-bw.png)
+![](./media/image_tpu-all-reduce-bw.png)
 
 **图:** TPU v5p 4x4x4 集群上的 AllReduce 带宽 (沿一个轴).
 
 这里还有 AllGather 带宽:
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/gpu-all-gather-bw.png)
+![](./media/image_gpu-all-gather-bw.png)
 
 **图:** 8xH100 集群上的 AllGather 带宽 (节点内).
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/tpu-all-gather-bw.png)
+![](./media/image_tpu-all-gather-bw.png)
 
 **图:** TPU v5e 8x16 集群上的 AllGather 带宽 (沿一个轴).
 
@@ -749,6 +749,6 @@ TPU v5p 带宽 (1 轴):
 
 在这里我们可以比较近似值 \\min(K / Z) \* (Z - 1) / Z 与真实值 (1 - ((Z - 1) / Z) \*\* K) \* (Z - 1) / Z. 除了 Z 值较小的情况外, 它们是相似的.
 
-![](%E5%A6%82%E4%BD%95%E7%90%86%E8%A7%A3-gpu/all-to-all-approx.png)
+![](./media/image_all-to-all-approx.png)
 
 **图:** 随着分片数量增加, 不规则 AllToAll 的近似成本与真实成本的比较.
