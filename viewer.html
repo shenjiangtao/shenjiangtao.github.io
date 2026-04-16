@@ -1,37 +1,219 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>文章阅读</title>
-  <link rel="stylesheet" href="./github.min.css">
+  <meta charset="UTF-8" />
+  <title>Markdown 阅读器</title>
+  <link rel="stylesheet" href="./github.min.css" />
   <script src="./marked.min.js"></script>
   <script src="./highlight.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
-    #toc { width: 250px; background: #f9f9f9; border-right: 1px solid #ddd; padding: 20px; overflow-y: auto; height: 100vh; position: sticky; top: 0; }
-    #toc h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
-    #toc ul { list-style: none; padding-left: 0; }
-    #toc li { margin: 5px 0; }
-    #toc a { text-decoration: none; color: #007acc; }
-    #toc a.active { font-weight: bold; color: #d9534f; }
-    #toc a:hover { text-decoration: underline; }
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #222222;
+      --border: #dddddd;
+      --link: #007acc;
+      --link-active: #d9534f;
+      --code-bg: #f5f5f5;
+    }
+    :root.dark {
+      --bg: #121212;
+      --fg: #e0e0e0;
+      --border: #444444;
+      --link: #4ea3ff;
+      --link-active: #ff7b72;
+      --code-bg: #1e1e1e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      min-height: 100vh;
+    }
+    a { color: var(--link); }
+    a:hover { text-decoration: underline; }
+
+    #left-panel {
+      width: 260px;
+      border-right: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #back a {
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+    }
+    button {
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    button:hover {
+      background: rgba(0,0,0,0.04);
+    }
+    #search-box {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    #search-input {
+      flex: 1;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      font-size: 13px;
+    }
+    #search-status {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    #content-wrapper {
+      flex: 1;
+      padding: 16px 24px;
+      position: relative;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+    #content img {
+      border: 1px solid var(--border);
+      margin: 10px 0;
+      max-width: 100%;
+      cursor: zoom-in;
+      transition: box-shadow 0.15s ease;
+    }
+    #content img.img-error {
+      border-color: #ff4d4f;
+    }
+    #content img:hover {
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.08);
+    }
+    pre {
+      background: var(--code-bg) !important;
+      padding: 10px;
+      overflow-x: auto;
+      border-radius: 4px;
+    }
+
+    #toc-right {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 260px;
+      height: 100vh;
+      border-left: 1px solid var(--border);
+      background: rgba(0,0,0,0.02);
+      backdrop-filter: blur(6px);
+      padding: 12px 16px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    #toc-right h3 {
+      margin: 0 0 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    #toc-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    #toc-list li { margin: 4px 0; }
+    #toc-list a {
+      text-decoration: none;
+      color: var(--link);
+      display: inline-block;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #toc-list a.active {
+      font-weight: bold;
+      color: var(--link-active);
+    }
     .hidden { display: none; }
-    .toggle-btn { cursor: pointer; font-size: 14px; color: #007acc; background: none; border: none; }
-    #content { flex: 1; padding: 20px; scroll-behavior: smooth; }
-    #content img { border: 1px solid #ccc; margin: 10px 0; }
-    pre { background: #eee; padding: 10px; overflow-x: auto; }
-    #back { margin-bottom: 20px; }
-    #back a { text-decoration: none; color: #007acc; font-weight: bold; }
-    #back a:hover { text-decoration: underline; }
+
+    mark.search-hit {
+      background: #ffe58f;
+      color: inherit;
+      padding: 0 1px;
+      border-radius: 2px;
+    }
+
+    #img-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #img-modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      box-shadow: 0 0 0 2px #fff;
+      cursor: zoom-out;
+      background: #000;
+    }
+    #img-modal-caption {
+      margin-top: 8px;
+      color: #f0f0f0;
+      font-size: 13px;
+      text-align: center;
+      max-width: 90vw;
+      word-break: break-all;
+    }
+
+    @media (max-width: 1100px) {
+      #toc-right { display: none; }
+    }
   </style>
 </head>
 <body>
-
-  <!-- 左侧目录 -->
-  <aside id="toc">
+  <div id="left-panel">
     <div id="back">
       <a href="index.html">← 返回主页</a>
     </div>
+    <div id="controls">
+      <button id="theme-toggle">切换暗色</button>
+      <span id="file-label" style="font-size:12px;opacity:0.7;"></span>
+    </div>
+    <div id="search-box">
+      <input id="search-input" type="text" placeholder="全文搜索..." />
+      <button id="search-next">下一个</button>
+    </div>
+    <div id="search-status"></div>
+  </div>
+
+  <div id="content-wrapper">
+    <div id="content">加载中...</div>
+  </div>
+
+  <aside id="toc-right">
     <h3>
       目录
       <button id="toggle-toc" class="toggle-btn">折叠</button>
@@ -39,13 +221,35 @@
     <ul id="toc-list"></ul>
   </aside>
 
-  <!-- 右侧正文 -->
-  <div id="content">加载中...</div>
+  <div id="img-modal">
+    <div>
+      <img id="img-modal-img" src="" alt="" />
+      <div id="img-modal-caption"></div>
+    </div>
+  </div>
 
   <script>
+    // ---------- 主题 ----------
+    const root = document.documentElement;
+    const themeToggle = document.getElementById('theme-toggle');
+    function applyTheme(t) {
+      if (t === 'dark') root.classList.add('dark');
+      else root.classList.remove('dark');
+    }
+    const savedTheme = localStorage.getItem('md-viewer-theme') || 'light';
+    applyTheme(savedTheme);
+    themeToggle.textContent = savedTheme === 'dark' ? '切换亮色' : '切换暗色';
+    themeToggle.addEventListener('click', () => {
+      const now = root.classList.contains('dark') ? 'light' : 'dark';
+      applyTheme(now);
+      localStorage.setItem('md-viewer-theme', now);
+      themeToggle.textContent = now === 'dark' ? '切换亮色' : '切换暗色';
+    });
+
+    // ---------- Marked ----------
     marked.setOptions({
-      highlight: function(code, lang) {
-        if (hljs.getLanguage(lang)) {
+      highlight: function (code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
           return hljs.highlight(code, { language: lang }).value;
         }
         return hljs.highlightAuto(code).value;
@@ -54,94 +258,248 @@
 
     const params = new URLSearchParams(window.location.search);
     const file = params.get('file');
+    const fileLabel = document.getElementById('file-label');
+    if (file) fileLabel.textContent = file;
 
-    const toggleBtn = document.getElementById('toggle-toc');
     const tocList = document.getElementById('toc-list');
-    toggleBtn.addEventListener('click', () => {
+    const toggleTocBtn = document.getElementById('toggle-toc');
+
+    toggleTocBtn.addEventListener('click', () => {
       tocList.classList.toggle('hidden');
-      toggleBtn.textContent = tocList.classList.contains('hidden') ? '展开' : '折叠';
+      toggleTocBtn.textContent = tocList.classList.contains('hidden') ? '展开' : '折叠';
     });
 
-    if (file) {
-      fetch(file).then(res => res.text()).then(text => {
-        let html = marked.parse(text);
-
-        // 修正 Pandoc 的 {width="..."} {height="..."} 语法
-        html = html.replace(/(<img[^>]+>)\{([^}]+)\}/g, (match, imgTag, attrs) => {
-          let style = '';
-          const widthMatch = attrs.match(/width="([^"]+)"/);
-          const heightMatch = attrs.match(/height="([^"]+)"/);
-          if (widthMatch) style += `width:${widthMatch[1]};`;
-          if (heightMatch) style += `height:${heightMatch[1]};`;
-          return imgTag.replace(/\/?>$/, ` style="${style}">`);
+    // ---------- 加载 Markdown ----------
+    function normalizeImagePaths(html, filePath) {
+      const basePath = filePath.substring(0, filePath.lastIndexOf('/'));
+      // 1) ./media/xxx 或 media/xxx → basePath/media/xxx
+      html = html.replace(/<img\s+([^>]*?)src="\.?\/?media\/([^"]+)"([^>]*)>/g,
+        (m, pre, filename, post) => {
+          return `<img ${pre}src="${basePath}/media/${filename}"${post}>`;
         });
-
-        // 修正图片路径
-        const basePath = file.substring(0, file.lastIndexOf('/'));
-        html = html.replace(/<img src="\.\/*media\/([^"]+)"/g, (match, filename) => {
-          return `<img src="${basePath}/media/${filename}"`;
+      // 2) 纯文件名 ![](gpu-diagram.png) → basePath/media/gpu-diagram.png
+      html = html.replace(/<img\s+([^>]*?)src="([^"\/]+?\.(?:png|jpe?g|gif|webp|svg))"([^>]*)>/gi,
+        (m, pre, filename, post) => {
+          return `<img ${pre}src="${basePath}/media/${filename}"${post}>`;
         });
+      return html;
+    }
 
-        document.getElementById('content').innerHTML = html;
-
-        // 自动生成目录
-        tocList.innerHTML = '';
-        const headings = document.querySelectorAll('#content h1, #content h2, #content h3');
-        headings.forEach((heading, index) => {
-          const id = 'heading-' + index;
-          heading.id = id;
-          const li = document.createElement('li');
-          li.style.marginLeft = heading.tagName === 'H2' ? '10px' : heading.tagName === 'H3' ? '20px' : '0';
-          li.innerHTML = `<a href="#${id}">${heading.textContent}</a>`;
-          tocList.appendChild(li);
-        });
-
-        // IntersectionObserver 高亮并滚动目录
-        const observerOptions = {
-          root: null,
-          rootMargin: '0px',
-          threshold: 0.3
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const id = entry.target.id;
-              document.querySelectorAll('#toc a').forEach(a => {
-                const isActive = a.getAttribute('href') === '#' + id;
-                a.classList.toggle('active', isActive);
-                if (isActive) {
-                  const toc = document.getElementById('toc');
-                  const linkRect = a.getBoundingClientRect();
-                  const tocRect = toc.getBoundingClientRect();
-                  const offset = linkRect.top - tocRect.top;
-                  // 在当前 scrollTop 基础上调整，保证高亮项稍微靠下
-                  toc.scrollTop += offset - 40; // 40px 偏移量可根据需要调整
-                }
-              });
-            }
-          });
-        }, observerOptions);
-
-        headings.forEach(heading => observer.observe(heading));
-
-        // 平滑滚动效果
-        document.querySelectorAll('#toc a').forEach(a => {
-          a.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetId = a.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-            if (targetElement) {
-              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          });
-        });
-
-      }).catch(err => {
-        document.getElementById('content').innerHTML = `<p style="color:red;">加载失败: ${err}</p>`;
+    function fixPandocImageAttrs(html) {
+      return html.replace(/(<img[^>]+>)\{([^}]+)\}/g, (match, imgTag, attrs) => {
+        let style = '';
+        const widthMatch = attrs.match(/width="([^"]+)"/);
+        const heightMatch = attrs.match(/height="([^"]+)"/);
+        if (widthMatch) style += `width:${widthMatch[1]};`;
+        if (heightMatch) style += `height:${heightMatch[1]};`;
+        if (!style) return imgTag;
+        return imgTag.replace(/\/?>$/, ` style="${style}">`);
       });
+    }
+
+    function attachImageHandlers() {
+      const imgs = document.querySelectorAll('#content img');
+      imgs.forEach(img => {
+        // 点击放大
+        img.addEventListener('click', () => {
+          openImageModal(img);
+        });
+
+        // 404 处理 + gpus 特殊前缀 image_
+        img.dataset.originalSrc = img.src;
+        img.onerror = function () {
+          const current = img.getAttribute('src');
+          const url = new URL(current, window.location.href);
+          const name = url.pathname.split('/').pop() || '';
+          const dir = url.pathname.slice(0, url.pathname.lastIndexOf('/') + 1);
+
+          // 尝试一次 image_ 前缀
+          if (!img.dataset.triedPrefix && !name.startsWith('image_')) {
+            img.dataset.triedPrefix = '1';
+            const prefixed = dir + 'image_' + name;
+            img.src = prefixed + (url.search || '') + (url.hash || '');
+            return;
+          }
+
+          img.classList.add('img-error');
+          const msg = `图片加载失败: ${name || '(未知文件名)'}`;
+          img.alt = msg;
+          img.title = msg;
+        };
+      });
+    }
+
+    // ---------- 目录 ----------
+    function buildToc() {
+      tocList.innerHTML = '';
+      const headings = document.querySelectorAll('#content h1, #content h2, #content h3');
+      headings.forEach((heading, index) => {
+        const id = 'heading-' + index;
+        heading.id = id;
+        const li = document.createElement('li');
+        if (heading.tagName === 'H2') li.style.marginLeft = '12px';
+        if (heading.tagName === 'H3') li.style.marginLeft = '24px';
+        li.innerHTML = `<a href="#${id}">${heading.textContent}</a>`;
+        tocList.appendChild(li);
+      });
+
+      const observerOptions = { root: null, rootMargin: '0px', threshold: 0.3 };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const id = entry.target.id;
+            document.querySelectorAll('#toc-list a').forEach(a => {
+              const isActive = a.getAttribute('href') === '#' + id;
+              a.classList.toggle('active', isActive);
+            });
+          }
+        });
+      }, observerOptions);
+      document.querySelectorAll('#content h1, #content h2, #content h3')
+        .forEach(h => observer.observe(h));
+
+      document.querySelectorAll('#toc-list a').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          const targetId = a.getAttribute('href').substring(1);
+          const target = document.getElementById(targetId);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    }
+
+    // ---------- 图片放大 ----------
+    const imgModal = document.getElementById('img-modal');
+    const imgModalImg = document.getElementById('img-modal-img');
+    const imgModalCaption = document.getElementById('img-modal-caption');
+
+    function openImageModal(img) {
+      imgModalImg.src = img.src;
+      imgModalCaption.textContent = img.alt || img.title || img.src;
+      imgModal.style.display = 'flex';
+    }
+    imgModal.addEventListener('click', () => {
+      imgModal.style.display = 'none';
+      imgModalImg.src = '';
+    });
+
+    // ---------- 全文搜索 ----------
+    const searchInput = document.getElementById('search-input');
+    const searchNextBtn = document.getElementById('search-next');
+    const searchStatus = document.getElementById('search-status');
+    let searchHits = [];
+    let searchIndex = -1;
+
+    function clearSearchMarks() {
+      const marks = document.querySelectorAll('mark.search-hit');
+      marks.forEach(m => {
+        const parent = m.parentNode;
+        parent.replaceChild(document.createTextNode(m.textContent), m);
+        parent.normalize();
+      });
+    }
+
+    function performSearch(term) {
+      clearSearchMarks();
+      searchHits = [];
+      searchIndex = -1;
+      searchStatus.textContent = '';
+
+      if (!term) return;
+
+      const walker = document.createTreeWalker(
+        document.getElementById('content'),
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(node) {
+            if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            if (!node.parentElement) return NodeFilter.FILTER_REJECT;
+            if (['SCRIPT', 'STYLE'].includes(node.parentElement.tagName)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      let node;
+      while ((node = walker.nextNode())) {
+        const text = node.nodeValue;
+        let match;
+        let lastIndex = 0;
+        const frag = document.createDocumentFragment();
+        let found = false;
+        while ((match = regex.exec(text)) !== null) {
+          found = true;
+          const before = text.slice(lastIndex, match.index);
+          if (before) frag.appendChild(document.createTextNode(before));
+          const mark = document.createElement('mark');
+          mark.className = 'search-hit';
+          mark.textContent = match[0];
+          frag.appendChild(mark);
+          searchHits.push(mark);
+          lastIndex = match.index + match[0].length;
+        }
+        if (found) {
+          const after = text.slice(lastIndex);
+          if (after) frag.appendChild(document.createTextNode(after));
+          node.parentNode.replaceChild(frag, node);
+        }
+      }
+
+      if (searchHits.length === 0) {
+        searchStatus.textContent = '未找到匹配项';
+      } else {
+        searchStatus.textContent = `找到 ${searchHits.length} 处，点击“下一个”跳转`;
+        gotoNextHit();
+      }
+    }
+
+    function gotoNextHit() {
+      if (!searchHits.length) return;
+      searchIndex = (searchIndex + 1) % searchHits.length;
+      const mark = searchHits[searchIndex];
+      mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        performSearch(searchInput.value.trim());
+      }
+    });
+    searchNextBtn.addEventListener('click', () => {
+      if (!searchHits.length) {
+        performSearch(searchInput.value.trim());
+      } else {
+        gotoNextHit();
+      }
+    });
+
+    // ---------- 主流程 ----------
+    if (file) {
+      fetch(file)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status} (${res.statusText})，请检查文件名大小写：${file}`);
+          }
+          return res.text();
+        })
+        .then(text => {
+          let html = marked.parse(text);
+          html = fixPandocImageAttrs(html);
+          html = normalizeImagePaths(html, file);
+          document.getElementById('content').innerHTML = html;
+          buildToc();
+          attachImageHandlers();
+        })
+        .catch(err => {
+          document.getElementById('content').innerHTML =
+            `<p style="color:red;">加载失败: ${err.message}</p>`;
+        });
     } else {
-      document.getElementById('content').innerHTML = '<p style="color:red;">未指定文件</p>';
+      document.getElementById('content').innerHTML =
+        '<p style="color:red;">未指定文件 (?file=posts/xxx.md)</p>';
     }
   </script>
 </body>
